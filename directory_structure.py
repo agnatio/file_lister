@@ -140,6 +140,9 @@ class FileListerApp:
                              arrowsize=13,
                              padding=5)
 
+        # Register keyboard shortcuts
+        self.register_keyboard_shortcuts()
+
         # Create menu bar
         self.create_menu_bar()
 
@@ -379,11 +382,12 @@ class FileListerApp:
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Open Directory...",
-                              command=self.browse_directory)
+                              command=self.browse_directory, accelerator="Ctrl+O")
         file_menu.add_command(label="Save Output As...",
-                              command=self.browse_output_file)
+                              command=self.browse_output_file, accelerator="Ctrl+S")
         file_menu.add_separator()
-        file_menu.add_command(label="Generate Tree", command=self.run_script)
+        file_menu.add_command(label="Generate Tree",
+                              command=self.run_script, accelerator="F5")
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
 
@@ -391,8 +395,9 @@ class FileListerApp:
         edit_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Edit", menu=edit_menu)
         edit_menu.add_command(label="Copy to Clipboard",
-                              command=self.copy_to_clipboard)
-        edit_menu.add_command(label="Clear Output", command=self.clear_output)
+                              command=self.copy_to_clipboard, accelerator="Ctrl+C")
+        edit_menu.add_command(label="Clear Output",
+                              command=self.clear_output, accelerator="Ctrl+X")
 
         # # View menu
         # view_menu = tk.Menu(menubar, tearoff=0)
@@ -414,7 +419,8 @@ class FileListerApp:
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About", command=self.show_about)
+        help_menu.add_command(
+            label="About", command=self.show_about, accelerator="F1")
 
     # def change_font_size(self):
     #     """Change the font size of the output text."""
@@ -495,7 +501,7 @@ class FileListerApp:
         # Copyright
         ttk.Label(
             frame,
-            text="© 2025 Alexey Matveev",
+            text="© 2025 File Lister Team",
             font=Font(family="Segoe UI", size=9)
         ).pack()
 
@@ -505,13 +511,13 @@ class FileListerApp:
 
         ttk.Label(
             website_frame,
-            text="If you are Oracle Fusion implementer:",
+            text="Visit our website:",
             font=Font(family="Segoe UI", size=9)
         ).pack(side=tk.LEFT)
 
         website_link = ttk.Label(
             website_frame,
-            text="www.sqlharmony.com",
+            text="www.filelister.example.com",
             font=Font(family="Segoe UI", size=9, underline=True),
             foreground=self.accent_color,
             cursor="hand2"
@@ -621,6 +627,31 @@ SOFTWARE."""
         x = (license_window.winfo_screenwidth() // 2) - (width // 2)
         y = (license_window.winfo_screenheight() // 2) - (height // 2)
         license_window.geometry(f'{width}x{height}+{x}+{y}')
+
+    def register_keyboard_shortcuts(self):
+        """Register keyboard shortcuts for commonly used functions."""
+        # File operations
+        self.root.bind("<Control-o>", lambda event: self.browse_directory())
+        self.root.bind("<Control-s>", lambda event: self.browse_output_file())
+        self.root.bind("<F5>", lambda event: self.run_script())
+
+        # Edit operations
+        # Note: We don't override Ctrl+C when text is selected in the output_text
+        self.root.bind(
+            "<Control-c>", lambda event: self.handle_copy_shortcut(event))
+        self.root.bind("<Control-x>", lambda event: self.clear_output())
+
+        # Help
+        self.root.bind("<F1>", lambda event: self.show_about())
+
+    def handle_copy_shortcut(self, event):
+        """Handle Ctrl+C specially to not interfere with normal text selection copying."""
+        # If this is triggered from the Text widget with a selection, let the default behavior happen
+        if isinstance(event.widget, tk.Text) and event.widget.tag_ranges(tk.SEL):
+            return
+
+        # Otherwise, copy the entire output
+        self.copy_to_clipboard()
 
     def highlight_text(self):
         """Apply simple syntax highlighting to the tree output."""
